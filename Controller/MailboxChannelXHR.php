@@ -23,14 +23,12 @@ class MailboxChannelXHR extends AbstractController
 
     public function processMailXHR(Request $request)
     {
-        // Return HTTP_OK Response
-        $response = new Response(Response::HTTP_OK);
-        $response->send();
-
         if ("POST" == $request->getMethod() && null != $request->get('email')) {
             $this->mailboxService->processMail($request->get('email'));
         }
-        
+        // Return HTTP_OK Response
+        $response = new Response(Response::HTTP_OK);
+        $response->send();
         exit(0);
     }
     
