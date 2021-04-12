@@ -110,6 +110,8 @@ class RefreshMailboxCommand extends Command
                 }
 
                 $output->writeln("\n <comment>Mailbox refreshed successfully !!!</comment>");
+                imap_expunge ($imap);
+                $output->writeln("\n <comment>Imported emails have been deleted successfully !!!</comment>");
             }
         }
 
