@@ -106,6 +106,7 @@ class RefreshMailboxCommand extends Command
                     $message = imap_fetchbody($imap, $messageNumber, "");
                     $this->pushMessage($message, $useSecureConnection);
                     $counter ++;
+                    imap_delete($imap, $messageNumber);
                 }
 
                 $output->writeln("\n <comment>Mailbox refreshed successfully !!!</comment>");
