@@ -31,7 +31,12 @@ class MailboxChannelXHR extends AbstractController
         $response->send();
         exit(0);
     }
-    
+
+    public function processMail($message)
+    {
+        return $this->mailboxService->processMail($message);
+    }
+
     public function loadMailboxesXHR(Request $request)
     {
         $collection = array_map(function ($mailbox) {

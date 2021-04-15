@@ -29,7 +29,7 @@ class MailboxService
 
     private $parser;
     private $container;
-	private $requestStack;
+    private $requestStack;
     private $entityManager;
     private $mailboxCollection = [];
     private $swiftMailer;
@@ -37,7 +37,7 @@ class MailboxService
     public function __construct(ContainerInterface $container, RequestStack $requestStack, EntityManagerInterface $entityManager, SwiftMailerService $swiftMailer)
     {
         $this->container = $container;
-		$this->requestStack = $requestStack;
+        $this->requestStack = $requestStack;
         $this->entityManager = $entityManager;
         $this->swiftMailer = $swiftMailer;
     }
@@ -53,7 +53,7 @@ class MailboxService
         return $configuration ?? null;
     }
 
-    public function parseMailboxConfigurations(bool $ignoreInvalidAttributes = false) 
+    public function parseMailboxConfigurations(bool $ignoreInvalidAttributes = false)
     {
         $path = $this->getPathToConfigurationFile();
 
@@ -76,7 +76,7 @@ class MailboxService
                     break;
                 }
             }
-            
+
             // IMAP Configuration
             ($imapConfiguration = ImapConfiguration::guessTransportDefinition($params['imap_server']['host']))
                 ->setUsername($params['imap_server']['username'])
@@ -87,7 +87,7 @@ class MailboxService
                 ->setName($params['name'])
                 ->setIsEnabled($params['enabled'])
                 ->setImapConfiguration($imapConfiguration);
-            
+
             if (!empty($swiftmailerConfiguration)) {
                 $mailbox->setSwiftMailerConfiguration($swiftmailerConfiguration);
             } else if (!empty($params['smtp_server']['mailer_id']) && true === $ignoreInvalidAttributes) {
@@ -135,7 +135,7 @@ class MailboxService
                 $mailboxCollection[] = $value;
             }
         }
-        
+
         return $mailboxCollection ?? [];
     }
 
@@ -169,7 +169,7 @@ class MailboxService
     }
 
     private function  searchticketSubjectRefrence($senderEmail, $messageSubject) {
-        
+
         // Search Criteria: Find ticket based on subject
         if (!empty($senderEmail) && !empty($messageSubject)) {
             $threadRepository = $this->entityManager->getRepository(Thread::class);
@@ -206,7 +206,7 @@ class MailboxService
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
-        
+
                         if (!empty($thread)) {
                             return $thread->getTicket();
                         }
@@ -220,7 +220,7 @@ class MailboxService
                         return $ticket;
                     } else {
                         $thread = $threadRepository->findOneByMessageId($criteriaValue);
-        
+
                         if (!empty($thread)) {
                             return $thread->getTicket();
                         }
@@ -253,10 +253,10 @@ class MailboxService
         //         return $ticket;
         //     }
         // }
-        
+
         return null;
     }
-    
+
     public function processMail($rawEmail)
     {
         $mailData = [];
@@ -283,7 +283,7 @@ class MailboxService
                     return $address['address'];
                 }, $addresses['cc']);
             }
-            
+
             // Skip email processing if no to-emails are specified
             if (empty($addresses['to'])) {
                 return;
@@ -294,7 +294,7 @@ class MailboxService
                 return;
             }
 
-              // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
+            // Check for self-referencing. Skip email processing if a mailbox is configured by the sender's address.
             try {
                 $this->getMailboxByEmail($addresses['from']);
                 return;
@@ -328,15 +328,15 @@ class MailboxService
         $mailData['subject'] = $parser->getHeader('subject');
         $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('htmlEmbedded')));
         $mailData['attachments'] = $parser->getAttachments();
-        
+
         if (!$mailData['message']) {
             $mailData['message'] = autolink($htmlFilter->addClassEmailReplyQuote($parser->getMessageBody('text')));
         }
 
         $website = $this->entityManager->getRepository(Website::class)->findOneByCode('knowledgebase');
-        
+
         if (!empty($mailData['from']) && $this->container->get('ticket.service')->isEmailBlocked($mailData['from'], $website)) {
-           return;
+            return;
         }
 
         // Search for any existing tickets
@@ -383,7 +383,7 @@ class MailboxService
                 $userDetails = $user->getCustomerInstance()->getPartialDetails();
             } else {
                 $user = $this->entityManager->getRepository(User::class)->findOneByEmail($mailData['from']);
-                
+
                 if (!empty($user) && null != $user->getAgentInstance()) {
                     $mailData['user'] = $user;
                     $userDetails = $user->getAgentInstance()->getPartialDetails();
@@ -409,7 +409,7 @@ class MailboxService
                         $this->entityManager->flush();
 
                         $ticket->lastCollaborator = $user;
-                        
+
                         $event = new GenericEvent(CoreWorkflowEvents\Ticket\Collaborator::getId(), [
                             'entity' => $ticket,
                         ]);
@@ -420,7 +420,7 @@ class MailboxService
             }
 
             $mailData['fullname'] = $userDetails['name'];
-            
+
             $thread = $this->container->get('ticket.service')->createThread($ticket, $mailData);
 
             if ($thread->getCreatedBy() == 'customer') {
@@ -432,11 +432,11 @@ class MailboxService
                     'entity' =>  $ticket,
                 ]);
             }
-                
+
             // Trigger thread reply event
             $this->container->get('event_dispatcher')->dispatch('uvdesk.automation.workflow.execute', $event);
         }
 
-        return;
+        return true;
     }
 }
